@@ -6,13 +6,17 @@ STEPPER::STEPPER(MultiStepper *steppers)
     setupGPIO();
     configureMicrostepping(false, false, false);
 
-    this->stepper1 = new AccelStepper(AccelStepper::FULL2WIRE, STEP2, DIR2);
-    this->stepper2 = new AccelStepper(AccelStepper::FULL2WIRE, STEP3, DIR3);
-    this->stepper3 = new AccelStepper(AccelStepper::FULL2WIRE, STEP4, DIR4);
+    this->stepper1 = new AccelStepper(AccelStepper::FULL2WIRE, STEP1, DIR1);
+    this->stepper2 = new AccelStepper(AccelStepper::FULL2WIRE, STEP2, DIR2);
+    this->stepper3 = new AccelStepper(AccelStepper::FULL2WIRE, STEP3, DIR3);
 
     this->stepper1->setMaxSpeed(4000);
     this->stepper2->setMaxSpeed(4000);
     this->stepper3->setMaxSpeed(4000);
+
+    this->stepper1->setAcceleration(1000);
+    this->stepper2->setAcceleration(1000);
+    this->stepper3->setAcceleration(1000);
 
     this->steppers->addStepper(*this->stepper1);
     this->steppers->addStepper(*this->stepper2);
@@ -44,24 +48,24 @@ void STEPPER::moveTo(Position pos){
 }
 
 void STEPPER::homing(){
-    while(digitalRead(FDC1) == HIGH){
-        this->stepper1->move(-1);
-        this->stepper1->runSpeed();
+    this->stepper1->moveTo(-10000000);
+    while(digitalRead(FDC1) == LOW){
+        this->stepper1->run();
     }
-    this->stepper1->setCurrentPosition(0);
     this->stepper1->stop();
+    this->stepper1->setCurrentPosition(0);
 
-    while(digitalRead(FDC2) == HIGH){
-        this->stepper2->move(-1);
-        this->stepper2->runSpeed();
+    this->stepper1->moveTo(-10000000);
+    while(digitalRead(FDC2)  == LOW){
+        this->stepper2->run();
     }
-    this->stepper2->setCurrentPosition(0);
     this->stepper2->stop();
-
-    while(digitalRead(FDC3) == HIGH){
-        this->stepper3->move(-1);
-        this->stepper3->runSpeed();
+    this->stepper2->setCurrentPosition(0);
+    
+    this->stepper1->moveTo(-10000000);
+    while(digitalRead(FDC3) == LOW){
+        this->stepper3->run();
     }
-    this->stepper3->setCurrentPosition(0);
     this->stepper3->stop();
+    this->stepper3->setCurrentPosition(0); 
 }

@@ -2,8 +2,8 @@
 #define GPIO_H
 #include <Arduino.h>
 
-#define STEP1 GPIO_NUM_34
-#define DIR1 GPIO_NUM_35
+#define STEP1 GPIO_NUM_18
+#define DIR1 GPIO_NUM_13
 #define STEP2 GPIO_NUM_32
 #define DIR2 GPIO_NUM_33
 #define STEP3 GPIO_NUM_25

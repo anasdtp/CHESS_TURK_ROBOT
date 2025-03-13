@@ -27,6 +27,8 @@ void setup() {
 
   myservo.setPeriodHertz(50);    // standard 50 hz servo
 	myservo.attach(SERVO, 1000, 2000);
+
+  // turc->homing();
 }
 
 void loop() {

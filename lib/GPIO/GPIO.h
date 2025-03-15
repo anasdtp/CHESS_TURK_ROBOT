@@ -21,7 +21,13 @@
 #define STEPPER_MS2 GPIO_NUM_2
 #define STEPPER_MS3 GPIO_NUM_15
 
+
+#define FDC1Pressed digitalRead(FDC1)
+#define FDC2Pressed digitalRead(FDC2)
+#define FDC3Pressed digitalRead(FDC3)
+
 void setupGPIO();
+
 
 
 #endif

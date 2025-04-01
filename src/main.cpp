@@ -50,9 +50,9 @@ void setup() {
 }
 
 void loop() {
-  // turc->RxManage();
+  turc->RxManage();
 
-  // turc->machine();
+  turc->machine();
 
   // long positions[3];
   // positions[0] = 200;
@@ -67,7 +67,6 @@ void loop() {
   // positions[2] = 0;
 
   // steppers->moveTo(positions);
-  steppers->run();
 
   //   if (turc->stepper2->distanceToGo() == 0)
 	// turc->stepper2->moveTo(-turc->stepper2->currentPosition());

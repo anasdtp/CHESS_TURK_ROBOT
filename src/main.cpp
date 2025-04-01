@@ -28,6 +28,25 @@ void setup() {
 	myservo->attach(SERVO, 1000, 2000);
 
   // turc->homing();
+
+  turc->stepper1->setMaxSpeed(1000.0);
+  turc->stepper1->setAcceleration(1000.0);
+  turc->stepper1->moveTo(-1000);
+  
+  turc->stepper2->setMaxSpeed(1000.0);
+  turc->stepper2->setAcceleration(1000.0);
+  turc->stepper2->moveTo(1000);
+
+  // long positions[4];
+  // positions[0] = STEPS_PER_REVOLTION;
+  // positions[1] = STEPS_PER_REVOLTION;
+  // positions[2] = 0;
+  // positions[4] = 0;
+  
+  // steppers->moveTo(positions);
+  Position pos = {0.1, 0, 0};
+  turc->moveTo(pos);
+
 }
 
 void loop() {
@@ -35,20 +54,24 @@ void loop() {
 
   // turc->machine();
 
-  long positions[3];
-  positions[0] = 200;
-  positions[1] = 200;
-  positions[2] = 200;
+  // long positions[3];
+  // positions[0] = 200;
+  // positions[1] = 200;
+  // positions[2] = 200;
   
-  steppers->moveTo(positions);
-  steppers->runSpeedToPosition();
-  delay(1000);
-  positions[0] = 0;
-  positions[1] = 0;
-  positions[2] = 0;
+  // steppers->moveTo(positions);
+  // steppers->runSpeedToPosition();
+  // delay(1000);
+  // positions[0] = 0;
+  // positions[1] = 0;
+  // positions[2] = 0;
 
-  steppers->moveTo(positions);
-  steppers->runSpeedToPosition();
+  // steppers->moveTo(positions);
+  steppers->run();
 
-
+  //   if (turc->stepper2->distanceToGo() == 0)
+	// turc->stepper2->moveTo(-turc->stepper2->currentPosition());
+  //   turc->stepper1->run();
+  //   turc->stepper2->run();
+  // Serial.println(turc->stepper1->currentPosition());
 }

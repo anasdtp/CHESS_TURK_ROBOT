@@ -8,17 +8,16 @@
 #include <MultiStepper.h>
 #include <ESP32Servo.h>
 
-
 #define DEG_PER_STEP 1.8f //Celui de base
 #define STEPS_PER_REVOLTION 200 //Celui de base
 
-#define METER_PER_REVOLTION_1 0.003175f //A mesurer pour chaque moteur.
-#define METER_PER_REVOLTION_2 0.003175f //A mesurer pour chaque moteur.
-#define METER_PER_REVOLTION_3 0.003175f //A mesurer pour chaque moteur. 
-#define METER_PER_REVOLTION_4 0.003175f //A mesurer pour chaque moteur. 
+#define METER_PER_REVOLTION_1 0.015f //A mesurer pour chaque moteur.
+#define METER_PER_REVOLTION_2 0.015f //A mesurer pour chaque moteur.
+#define METER_PER_REVOLTION_3 0.015f //A mesurer pour chaque moteur. 
+#define METER_PER_REVOLTION_4 0.006f //A mesurer pour chaque moteur. 
 //Faire tourner le moteur d'un tour et mesurer la distance parcourue en metres pour chaque axe
 
-#define NB_STEPPER 3
+#define NB_STEPPER 4
 
 class TURC : public CommunicationPC
 {

@@ -12,10 +12,10 @@ TURC::TURC(MultiStepper *steppers, Servo *servo) : CommunicationPC()
     this->stepper3 = new AccelStepper(AccelStepper::FULL2WIRE, STEP3, DIR3);
     this->stepper4 = new AccelStepper(AccelStepper::FULL2WIRE, STEP4, DIR4);
 
-    this->stepper1->setMaxSpeed(4000);
-    this->stepper2->setMaxSpeed(4000);
-    this->stepper3->setMaxSpeed(4000);
-    this->stepper4->setMaxSpeed(4000);
+    this->stepper1->setMaxSpeed(1000);
+    this->stepper2->setMaxSpeed(1000);
+    this->stepper3->setMaxSpeed(1000);
+    this->stepper4->setMaxSpeed(1000);
 
     this->stepper1->setAcceleration(1000);
     this->stepper2->setAcceleration(1000);
@@ -28,7 +28,7 @@ TURC::TURC(MultiStepper *steppers, Servo *servo) : CommunicationPC()
     this->steppers->addStepper(*this->stepper4);
 
     Position pos_min = {0, 0, 0};
-    Position pos_max = {0.6, 0.6, 0.6};
+    Position pos_max = {0.4, 0.4, 0.2};
     setPosMin_Max(pos_min, pos_max);
 
     state = WAIT;
@@ -55,8 +55,9 @@ void TURC::moveTo(Position pos){
         return;
     }
     positions[0] = pos.x * this->step_per_meter[0];
-    positions[1] = pos.x * this->step_per_meter[1];
-    positions[2] = pos.y * this->step_per_meter[2];
+    positions[1] = positions[0];
+    positions[2] = pos.y * this->step_per_meter[1];
+    positions[3] = pos.z * this->step_per_meter[2];
     
     this->steppers->moveTo(positions);
     // this->steppers->runSpeedToPosition(); // Blocks until all are in position

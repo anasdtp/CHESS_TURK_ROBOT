@@ -40,7 +40,7 @@ public:
     /// There is an upper limit of MULTISTEPPER_MAX_STEPPERS = 10 to the number of steppers that can be managed
     /// \param[in] stepper Reference to a stepper to add to the managed list
     /// \return true if successful. false if the number of managed steppers would exceed MULTISTEPPER_MAX_STEPPERS
-    boolean addStepper(AccelStepper& stepper);
+    boolean addStepper(AccelStepper *stepper);
 
     /// Set the target positions of all managed steppers 
     /// according to a coordinate array.

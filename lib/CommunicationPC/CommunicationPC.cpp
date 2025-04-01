@@ -20,6 +20,9 @@ CommunicationPC* CommunicationPC::instance = nullptr;  // Initialize the static 
 
 CommunicationPC::CommunicationPC(/* args */)
 {
+    currentState = WAITING_HEADER;
+    dataCounter = 0;
+
     FIFO_ecriture = 0;
 
     move_received = false;
@@ -51,75 +54,11 @@ void CommunicationPC::end()
 }
 
 void CommunicationPC::onReceiveFunction(void) {
-
-    static StateRx currentState = WAITING_HEADER;
-    static uint8_t dataCounter = 0, byte;
-
     while (availableData()) {
-        byte = readData();
+        uint8_t byte = readData();
         // Serial.printf("%2X ",byte);
         // _serial->write(byte);
-        switch (currentState) {
-            case WAITING_HEADER:{
-                if (byte == 0xFF) { // HEADER
-                    currentState = RECEIVING_ID;
-                    rxMsg[FIFO_ecriture].checksum = 0;
-                }
-                }
-                break;
-
-            case RECEIVING_ID:{
-                rxMsg[FIFO_ecriture].id = byte;
-                rxMsg[FIFO_ecriture].len = 0;
-                currentState = RECEIVING_LEN;
-                rxMsg[FIFO_ecriture].checksum ^= byte;
-                }break;
-
-            case RECEIVING_LEN:{
-                if (rxMsg[FIFO_ecriture].data) {
-                    delete[] rxMsg[FIFO_ecriture].data; // Libérer la mémoire allouée si elle existe
-                    rxMsg[FIFO_ecriture].data = nullptr;
-                }
-                rxMsg[FIFO_ecriture].len = byte;
-                // Serial.println("rxMsg[FIFO_ecriture].data = new uint8_t[rxMsg[FIFO_ecriture].len];");
-                rxMsg[FIFO_ecriture].data = new uint8_t[rxMsg[FIFO_ecriture].len];//Allouée de la mémoire
-                currentState = RECEIVING_DATA;
-                dataCounter = 0;
-                rxMsg[FIFO_ecriture].checksum ^= byte;
-                }break;
-
-            case RECEIVING_DATA:{
-                rxMsg[FIFO_ecriture].data[dataCounter++] = byte;
-                rxMsg[FIFO_ecriture].checksum ^= byte;//XOR
-                if (dataCounter >= rxMsg[FIFO_ecriture].len) {
-                    currentState = RECEIVING_CHECKSUM;
-                }
-                }break;
-
-            case RECEIVING_CHECKSUM:{
-                if (byte == rxMsg[FIFO_ecriture].checksum) {
-                    currentState = WAITING_FOOTER;
-                } else {
-                    // Gérer l'erreur de checksum ici
-                    // Serial.printf("CommunicationARAL::onReceiveFunction() : Erreur calcul checksum. checksum calculé : %d (int), checksum reçu : %d (int) \n", checksum, byte);
-                    sendMsg(ID_REPEAT_REQUEST);
-                    currentState = WAITING_HEADER;
-                }
-                }break;
-
-            case WAITING_FOOTER:{
-                if (byte == 0xFF) { // FOOTER
-                    // Le message est complet
-                    // printMessage(rxMsg[FIFO_ecriture]);
-                    FIFO_ecriture = (FIFO_ecriture + 1) % SIZE_FIFO;
-                    // sendMsg(ID_ACK_GENERAL);
-                }
-                currentState = WAITING_HEADER;
-                rxMsg[FIFO_ecriture].checksum = 0;
-                // Serial.printf("delete[] rxMsg[FIFO_ecriture = %d].data;\n", FIFO_ecriture);
-                // delete[] rxMsg[FIFO_ecriture].data; // Libérer la mémoire allouée, pour les prochaines données
-                }break;
-        }
+        onReceive(byte); // Call the function to handle the received byte
     }
 }
 
@@ -130,74 +69,80 @@ void CommunicationPC::onReceiveFunctionBTStatic(esp_spp_cb_event_t event, esp_sp
 }
 
 void CommunicationPC::onReceiveFunctionBT(esp_spp_cb_event_t event, esp_spp_cb_param_t *param) {
-    static StateRx currentState = WAITING_HEADER;
-    static uint8_t dataCounter = 0;
-
     while (availableDataBT()) {
         uint8_t byte = readDataBT();
         // Serial.printf("%2X ",byte);
         // _serial->write(byte);
-        switch (currentState) {
-            case WAITING_HEADER:{
-                if (byte == 0xFF) { // HEADER
-                    currentState = RECEIVING_ID;
-                    rxMsg[FIFO_ecriture].checksum = 0;
-                }
-                }
-                break;
+        onReceive(byte); // Call the function to handle the received byte
+    }
+}
 
-            case RECEIVING_ID:{
-                rxMsg[FIFO_ecriture].id = byte;
-                rxMsg[FIFO_ecriture].len = 0;
-                currentState = RECEIVING_LEN;
-                rxMsg[FIFO_ecriture].checksum ^= byte;
-                }break;
-
-            case RECEIVING_LEN:{
-                if (rxMsg[FIFO_ecriture].data) {
-                    delete[] rxMsg[FIFO_ecriture].data; // Libérer la mémoire allouée si elle existe
-                    rxMsg[FIFO_ecriture].data = nullptr;
-                }
-                rxMsg[FIFO_ecriture].len = byte;
-                // Serial.println("rxMsg[FIFO_ecriture].data = new uint8_t[rxMsg[FIFO_ecriture].len];");
-                rxMsg[FIFO_ecriture].data = new uint8_t[rxMsg[FIFO_ecriture].len];//Allouée de la mémoire
-                currentState = RECEIVING_DATA;
-                dataCounter = 0;
-                rxMsg[FIFO_ecriture].checksum ^= byte;
-                }break;
-
-            case RECEIVING_DATA:{
-                rxMsg[FIFO_ecriture].data[dataCounter++] = byte;
-                rxMsg[FIFO_ecriture].checksum ^= byte;//XOR
-                if (dataCounter >= rxMsg[FIFO_ecriture].len) {
-                    currentState = RECEIVING_CHECKSUM;
-                }
-                }break;
-
-            case RECEIVING_CHECKSUM:{
-                if (byte == rxMsg[FIFO_ecriture].checksum) {
-                    currentState = WAITING_FOOTER;
-                } else {
-                    // Gérer l'erreur de checksum ici
-                    // Serial.printf("CommunicationARAL::onReceiveFunction() : Erreur calcul checksum. checksum calculé : %d (int), checksum reçu : %d (int) \n", checksum, byte);
-                    sendMsg(ID_REPEAT_REQUEST);
-                    currentState = WAITING_HEADER;
-                }
-                }break;
-
-            case WAITING_FOOTER:{
-                if (byte == 0xFF) { // FOOTER
-                    // Le message est complet
-                    // printMessage(rxMsg[FIFO_ecriture]);
-                    FIFO_ecriture = (FIFO_ecriture + 1) % SIZE_FIFO;
-                    // sendMsg(ID_ACK_GENERAL);
-                }
-                currentState = WAITING_HEADER;
+void CommunicationPC::onReceive(uint8_t byte) {    
+    switch (currentState) {
+        case WAITING_HEADER:{
+            if (byte == 0xFF) { // HEADER
+                currentState = RECEIVING_ID;
                 rxMsg[FIFO_ecriture].checksum = 0;
-                // Serial.printf("delete[] rxMsg[FIFO_ecriture = %d].data;\n", FIFO_ecriture);
-                // delete[] rxMsg[FIFO_ecriture].data; // Libérer la mémoire allouée, pour les prochaines données
-                }break;
-        }
+            }
+            }
+            break;
+
+        case RECEIVING_ID:{
+            rxMsg[FIFO_ecriture].id = byte;
+            rxMsg[FIFO_ecriture].len = 0;
+            currentState = RECEIVING_LEN;
+            rxMsg[FIFO_ecriture].checksum ^= byte;
+            }break;
+
+        case RECEIVING_LEN:{
+            if (rxMsg[FIFO_ecriture].data) {
+                delete[] rxMsg[FIFO_ecriture].data; // Libérer la mémoire allouée si elle existe
+                rxMsg[FIFO_ecriture].data = nullptr;
+            }
+            rxMsg[FIFO_ecriture].len = byte;
+            // Serial.println("rxMsg[FIFO_ecriture].data = new uint8_t[rxMsg[FIFO_ecriture].len];");
+            rxMsg[FIFO_ecriture].data = new uint8_t[rxMsg[FIFO_ecriture].len];//Allouée de la mémoire
+            currentState = RECEIVING_DATA;
+            dataCounter = 0;
+            rxMsg[FIFO_ecriture].checksum ^= byte;
+            }break;
+
+        case RECEIVING_DATA:{
+            rxMsg[FIFO_ecriture].data[dataCounter++] = byte;
+            rxMsg[FIFO_ecriture].checksum ^= byte;//XOR
+            if (dataCounter >= rxMsg[FIFO_ecriture].len) {
+                currentState = RECEIVING_CHECKSUM;
+            }
+            }break;
+
+        case RECEIVING_CHECKSUM:{
+            if (byte == rxMsg[FIFO_ecriture].checksum) {
+                currentState = WAITING_FOOTER;
+            } else {
+                // Gérer l'erreur de checksum ici
+                // Serial.printf("CommunicationARAL::onReceiveFunction() : Erreur calcul checksum. checksum calculé : %d (int), checksum reçu : %d (int) \n", checksum, byte);
+                sendMsg(ID_REPEAT_REQUEST);
+                currentState = WAITING_HEADER;
+            }
+            }break;
+
+        case WAITING_FOOTER:{
+            if (byte == 0xFF) { // FOOTER
+                // Le message est complet
+                // printMessage(rxMsg[FIFO_ecriture]);
+                FIFO_ecriture = (FIFO_ecriture + 1) % SIZE_FIFO;
+                // sendMsg(ID_ACK_GENERAL);
+            }
+            currentState = WAITING_HEADER;
+            rxMsg[FIFO_ecriture].checksum = 0;
+            // Serial.printf("delete[] rxMsg[FIFO_ecriture = %d].data;\n", FIFO_ecriture);
+            // delete[] rxMsg[FIFO_ecriture].data; // Libérer la mémoire allouée, pour les prochaines données
+            }break;
+        
+        default:
+            // Gérer l'état par défaut ici si nécessaire
+            currentState = WAITING_HEADER;
+            break;
     }
 }
 
@@ -215,7 +160,8 @@ void CommunicationPC::RxManage(){
     switch (rxMsg[FIFO_lecture].id)
     {
         case ID_RECEIVE_MOVE:{
-            move->x = (float)((int16_t)(rxMsg[FIFO_lecture].data[1]<<8 | rxMsg[FIFO_lecture].data[0]))/1000.f;
+            //Je recois en millimetres et je convertie en metres
+            move->x = (float)((int16_t)(rxMsg[FIFO_lecture].data[1]<<8 | rxMsg[FIFO_lecture].data[0]))/1000.f; 
             move->y = (float)((int16_t)(rxMsg[FIFO_lecture].data[3]<<8 | rxMsg[FIFO_lecture].data[2]))/1000.f;
             move->z = (float)((int16_t)(rxMsg[FIFO_lecture].data[5]<<8 | rxMsg[FIFO_lecture].data[4]))/1000.f;
             move_received = true;

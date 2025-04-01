@@ -13,6 +13,8 @@
 #define ID_ACK_SERVO_GRAB   0xA3 //On accuse la réception
 #define ID_SERVO_RELEASE    0xA4 //On demande de desserrer la pince
 #define ID_ACK_SERVO_RELEASE 0xA5 //On accuse la réception
+#define ID_HOMING          0xA6 //On demande de faire le homing
+#define ID_ACK_HOMING      0xA7 //On accuse la réception
 
 #ifndef SIZE_FIFO
   #define SIZE_FIFO 32 //maximum 150 du fait du type char
@@ -82,6 +84,14 @@ public:
         return false;
     }
 
+    bool newHomingReceived(bool after_check = false){
+        if(this->homing_received){
+          this->homing_received = after_check;
+          return true;
+        }
+        return false;
+    }
+
 private:
     HardwareSerial *_serial;
     BluetoothSerial *_serialBT;
@@ -96,6 +106,8 @@ private:
       RECEIVING_CHECKSUM,
       WAITING_FOOTER
     };
+    StateRx currentState = WAITING_HEADER;
+    uint8_t dataCounter = 0, byte;
 
     void onReceiveFunction(void);
 
@@ -103,11 +115,14 @@ private:
     static void onReceiveFunctionBTStatic(esp_spp_cb_event_t event, esp_spp_cb_param_t *param);
     void onReceiveFunctionBT(esp_spp_cb_event_t event, esp_spp_cb_param_t *param);
 
+    void onReceive(uint8_t byte);
+
     Position *move;
     bool move_received;
 
     bool servo_grab_received;
     bool servo_release_received;
+    bool homing_received;
 };
 
 

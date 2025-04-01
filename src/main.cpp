@@ -31,11 +31,23 @@ void setup() {
 
   turc->stepper1->setMaxSpeed(1000.0);
   turc->stepper1->setAcceleration(1000.0);
-  turc->stepper1->moveTo(-1000);
+  turc->stepper1->moveTo(1000);
+  turc->stepper1->setCurrentPosition(0);
   
   turc->stepper2->setMaxSpeed(1000.0);
   turc->stepper2->setAcceleration(1000.0);
   turc->stepper2->moveTo(1000);
+  turc->stepper2->setCurrentPosition(0);
+
+  turc->stepper3->setMaxSpeed(1000.0);
+  turc->stepper3->setAcceleration(1000.0);
+  turc->stepper3->moveTo(1000);
+  turc->stepper3->setCurrentPosition(0);
+
+  turc->stepper4->setMaxSpeed(1000.0);
+  turc->stepper4->setAcceleration(1000.0);
+  turc->stepper4->moveTo(1000);
+  turc->stepper4->setCurrentPosition(0);
 
   // long positions[4];
   // positions[0] = STEPS_PER_REVOLTION;
@@ -53,24 +65,4 @@ void loop() {
   turc->RxManage();
 
   turc->machine();
-
-  // long positions[3];
-  // positions[0] = 200;
-  // positions[1] = 200;
-  // positions[2] = 200;
-  
-  // steppers->moveTo(positions);
-  // steppers->runSpeedToPosition();
-  // delay(1000);
-  // positions[0] = 0;
-  // positions[1] = 0;
-  // positions[2] = 0;
-
-  // steppers->moveTo(positions);
-
-  //   if (turc->stepper2->distanceToGo() == 0)
-	// turc->stepper2->moveTo(-turc->stepper2->currentPosition());
-  //   turc->stepper1->run();
-  //   turc->stepper2->run();
-  // Serial.println(turc->stepper1->currentPosition());
 }

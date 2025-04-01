@@ -42,7 +42,9 @@ public:
     void moveTo(Position pos);
     void moveTo(Position *pos);
 
-    void homing();
+    Position *getCurrentPosition();
+
+    bool homing();
 
     void machine();
 
@@ -62,6 +64,7 @@ private:
 
     Position pos_max;
     Position pos_min;
+    Position *current;
 
     // État de la réception
     enum StateStepper{
@@ -69,6 +72,7 @@ private:
         RUN,
         SERVO_GRAB,
         SERVO_RELEASE,
+        HOMING,
       };
 
     StateStepper state;

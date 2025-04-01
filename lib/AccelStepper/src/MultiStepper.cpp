@@ -6,16 +6,14 @@
 #include "MultiStepper.h"
 #include "AccelStepper.h"
 
-MultiStepper::MultiStepper()
-    : _num_steppers(0)
+MultiStepper::MultiStepper() : _num_steppers(0)
 {
 }
 
-boolean MultiStepper::addStepper(AccelStepper& stepper)
+boolean MultiStepper::addStepper(AccelStepper *stepper)
 {
-    if (_num_steppers >= MULTISTEPPER_MAX_STEPPERS)
-	return false; // No room for more
-    _steppers[_num_steppers++] = &stepper;
+    if (_num_steppers >= MULTISTEPPER_MAX_STEPPERS){return false;}// No room for more
+    _steppers[_num_steppers++] = stepper;
     return true;
 }
 

@@ -22,14 +22,19 @@ TURC::TURC(MultiStepper *steppers, Servo *servo) : CommunicationPC()
     this->stepper3->setAcceleration(1000);
     this->stepper4->setAcceleration(1000);
 
-    this->steppers->addStepper(*this->stepper1);
-    this->steppers->addStepper(*this->stepper2);
-    this->steppers->addStepper(*this->stepper3);
-    this->steppers->addStepper(*this->stepper4);
+    this->steppers->addStepper(this->stepper1);
+    this->steppers->addStepper(this->stepper2);
+    this->steppers->addStepper(this->stepper3);
+    this->steppers->addStepper(this->stepper4);
 
     Position pos_min = {0, 0, 0};
     Position pos_max = {0.4, 0.4, 0.2};
     setPosMin_Max(pos_min, pos_max);
+
+    current = new Position();
+    current->x = 0;
+    current->y = 0;
+    current->z = 0;
 
     state = WAIT;
 }
@@ -75,29 +80,65 @@ void TURC::moveTo(Position *pos){
     // this->steppers->runSpeedToPosition(); // Blocks until all are in position
 }
 
-void TURC::homing(){
-    this->stepper1->moveTo(-10000000);
-    this->stepper2->moveTo(-10000000);
-    while(FDC1Pressed == LOW){
-        this->stepper1->run();
-    }
-    this->stepper1->stop();
-    this->stepper2->stop();
-    this->stepper1->setCurrentPosition(0);
-    this->stepper2->setCurrentPosition(0);
+Position *TURC::getCurrentPosition(){
+    current->x = this->stepper1->currentPosition() / this->step_per_meter[0];
+    current->y = this->stepper3->currentPosition() / this->step_per_meter[2];
+    current->z = this->stepper4->currentPosition() / this->step_per_meter[3];
+    return current;
+}
 
-    while(FDC2Pressed == LOW){
-        this->stepper3->run();
+bool TURC::homing() {
+    static int axe = 0;
+
+    switch (axe) {
+        case 0:
+            this->stepper1->moveTo(-10000000);
+            this->stepper2->moveTo(-10000000);
+            this->stepper3->moveTo(-10000000);
+            this->stepper4->moveTo(-10000000);
+            axe = 1;
+            break;
+
+        case 1:
+            if (FDC1Pressed == LOW) {
+                this->stepper1->run();
+                this->stepper2->run();
+            } else {
+                this->stepper1->stop();
+                this->stepper2->stop();
+                this->stepper1->setCurrentPosition(0);
+                this->stepper2->setCurrentPosition(0);
+                axe = 2;
+            }
+            break;
+
+        case 2:
+            if (FDC2Pressed == LOW) {
+                this->stepper3->run();
+            } else {
+                this->stepper3->stop();
+                this->stepper3->setCurrentPosition(0);
+                axe = 3;
+            }
+            break;
+
+        case 3:
+            if (FDC3Pressed == LOW) {
+                this->stepper4->run();
+            } else {
+                this->stepper4->stop();
+                this->stepper4->setCurrentPosition(0);
+                axe = 0; // Reset axe to indicate homing is complete
+                return true; // Homing is complete
+            }
+            break;
+
+        default:
+            axe = 0;
+            break;
     }
-    this->stepper3->stop();
-    this->stepper3->setCurrentPosition(0);
-    
-    this->stepper4->moveTo(-10000000);
-    while(FDC3Pressed == LOW){
-        this->stepper4->run();
-    }
-    this->stepper4->stop();
-    this->stepper4->setCurrentPosition(0); 
+
+    return false;
 }
 
 void TURC::setPosMin_Max(Position pos_min, Position pos_max){
@@ -153,6 +194,13 @@ void TURC::machine(){
         servo->write(0);
         delay(100);
         state = WAIT;
+    }
+        break;
+    case HOMING:
+    {
+        if(homing()){
+            state = WAIT;
+        }
     }
         break;
     default:

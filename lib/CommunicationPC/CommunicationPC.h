@@ -4,17 +4,19 @@
 #include <Commun.h>
 #include <BluetoothSerial.h>
 
-#define ID_ACK_GENERAL 0xC0 //Ack pour tous le reste
-#define ID_REPEAT_REQUEST 0xD0
+#define ID_ACK_GENERAL                0xC0 //Ack pour tous le reste
+#define ID_REPEAT_REQUEST             0xD0
 
-#define ID_RECEIVE_MOVE     0xA0 //On reçoit le mouvement x y z à faire en millimetres
-#define ID_ACK_RECEIVE_MOVE 0xA1 //On accuse la réception
-#define ID_SERVO_GRAB       0xA2 //On demande de serrer la pince
-#define ID_ACK_SERVO_GRAB   0xA3 //On accuse la réception
-#define ID_SERVO_RELEASE    0xA4 //On demande de desserrer la pince
-#define ID_ACK_SERVO_RELEASE 0xA5 //On accuse la réception
-#define ID_HOMING          0xA6 //On demande de faire le homing
-#define ID_ACK_HOMING      0xA7 //On accuse la réception
+#define ID_CMD_MOVE                   0xA0 //On reçoit le mouvement x y z à faire en millimetres
+#define ID_ACK_CMD_MOVE               0xA1 //On accuse la réception
+#define ID_SERVO_GRAB                 0xA2 //On demande de serrer la pince
+#define ID_ACK_SERVO_GRAB             0xA3 //On accuse la réception
+#define ID_SERVO_RELEASE              0xA4 //On demande de desserrer la pince
+#define ID_ACK_SERVO_RELEASE          0xA5 //On accuse la réception
+#define ID_HOMING                     0xA6 //On demande de faire le homing
+#define ID_ACK_HOMING                 0xA7 //On accuse la réception
+#define ID_SEND_CURRENT_POSITION      0xA8 //On nous demande d'envoyer la position courante
+#define ID_ACK_SEND_CURRENT_POSITION  0xA9 //On accuse la réception en envoyant la position courante
 
 #ifndef SIZE_FIFO
   #define SIZE_FIFO 32 //maximum 150 du fait du type char
@@ -53,43 +55,16 @@ public:
     void sendMsg(uint8_t id, int16_t nb, int16_t nb2);
     void sendMsg(uint8_t id, int16_t nb, int16_t nb2, int16_t nb3);
 
+    void sendMsg(uint8_t id, Position *pos);
+
     void printMessage(Message msg);
 
 
-    bool newMoveReceived(bool after_check = false){
-        if(this->move_received){
-          this->move_received = after_check;
-          return true;
-        }
-        return false;
-    }
+    bool newMoveReceived();
+    MOVE *getMove();
 
-    Position *getMove(){
-        return this->move;
-    }
-
-    bool newServoGrabReceived(bool after_check = false){
-        if(this->servo_grab_received){
-          this->servo_grab_received = after_check;
-          return true;
-        }
-        return false;
-    }
-
-    bool newServoReleaseReceived(bool after_check = false){
-        if(this->servo_release_received){
-          this->servo_release_received = after_check;
-          return true;
-        }
-        return false;
-    }
-
-    bool newHomingReceived(bool after_check = false){
-        if(this->homing_received){
-          this->homing_received = after_check;
-          return true;
-        }
-        return false;
+    void attachCurrentPosition(Position *pos){
+        this->current_position = pos;//Sert à recuperer le pointeur de la position courante
     }
 
 private:
@@ -117,12 +92,11 @@ private:
 
     void onReceive(uint8_t byte);
 
-    Position *move;
-    bool move_received;
-
-    bool servo_grab_received;
-    bool servo_release_received;
-    bool homing_received;
+    MOVE move[SIZE_FIFO];
+    int cursor_move_write = 0;
+    int cursor_move_read = 0;
+    
+    Position *current_position;
 };
 
 

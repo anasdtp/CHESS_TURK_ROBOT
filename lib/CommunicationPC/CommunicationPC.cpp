@@ -25,15 +25,14 @@ CommunicationPC::CommunicationPC(/* args */)
 
     FIFO_ecriture = 0;
 
-    move_received = false;
 
-    move = new Position();
-    move->x = 0;
-    move->y = 0;
-    move->z = 0;
+    cursor_move_read = 0;
+    cursor_move_write = 0;
+    move[cursor_move_write].type = NONE;
+    move[cursor_move_read].pos.x = 0;
+    move[cursor_move_read].pos.y = 0;
+    move[cursor_move_read].pos.z = 0;
 
-    servo_grab_received = false;
-    servo_release_received = false;
 }
 
 void CommunicationPC::begin(HardwareSerial *srl, long baud, String nameBT){
@@ -159,24 +158,38 @@ void CommunicationPC::RxManage(){
 
     switch (rxMsg[FIFO_lecture].id)
     {
-        case ID_RECEIVE_MOVE:{
+        case ID_CMD_MOVE:{
             //Je recois en millimetres et je convertie en metres
-            move->x = (float)((int16_t)(rxMsg[FIFO_lecture].data[1]<<8 | rxMsg[FIFO_lecture].data[0]))/1000.f; 
-            move->y = (float)((int16_t)(rxMsg[FIFO_lecture].data[3]<<8 | rxMsg[FIFO_lecture].data[2]))/1000.f;
-            move->z = (float)((int16_t)(rxMsg[FIFO_lecture].data[5]<<8 | rxMsg[FIFO_lecture].data[4]))/1000.f;
-            move_received = true;
+            move[cursor_move_write].type = XYT_MOVE;
+            move[cursor_move_write].pos.x = (float)((int16_t)(rxMsg[FIFO_lecture].data[1]<<8 | rxMsg[FIFO_lecture].data[0]))/1000.f; 
+            move[cursor_move_write].pos.y = (float)((int16_t)(rxMsg[FIFO_lecture].data[3]<<8 | rxMsg[FIFO_lecture].data[2]))/1000.f;
+            move[cursor_move_write].pos.z = (float)((int16_t)(rxMsg[FIFO_lecture].data[5]<<8 | rxMsg[FIFO_lecture].data[4]))/1000.f;
+            cursor_move_write = (cursor_move_write + 1) % SIZE_FIFO;
             
-            sendMsg(ID_ACK_RECEIVE_MOVE);
+            sendMsg(ID_ACK_CMD_MOVE);
         }break;
 
         case ID_SERVO_GRAB:{
-            servo_grab_received = true;
+            move[cursor_move_write].type = SERVO_GRAB_MOVE;
+            cursor_move_write = (cursor_move_write + 1) % SIZE_FIFO;
+
             sendMsg(ID_ACK_SERVO_GRAB);
         }break;
 
         case ID_SERVO_RELEASE:{
-            servo_release_received = true;
+            move[cursor_move_write].type = SERVO_RELEASE_MOVE;
+            cursor_move_write = (cursor_move_write + 1) % SIZE_FIFO;
             sendMsg(ID_ACK_SERVO_RELEASE);
+        }break;
+
+        case ID_HOMING:{
+            move[cursor_move_write].type = HOMING_MOVE;
+            cursor_move_write = (cursor_move_write + 1) % SIZE_FIFO;
+            sendMsg(ID_ACK_HOMING);
+        }break;
+
+        case ID_SEND_CURRENT_POSITION:{
+            sendMsg(ID_ACK_SEND_CURRENT_POSITION, current_position);
         }break;
 
         default:
@@ -384,6 +397,20 @@ void CommunicationPC::sendMsg(uint8_t id, int16_t nb, int16_t nb2, int16_t nb3){
     sendMsg(id, len, data);
 }
 
+void CommunicationPC::sendMsg(uint8_t id, Position *pos){
+    if(pos == nullptr){
+        sendMsg(id, 
+            (int16_t)(0), 
+            (int16_t)(0), 
+            (int16_t)(0));
+        return;
+    }
+    sendMsg(id, 
+        (int16_t)(pos->x * 1000.f), 
+        (int16_t)(pos->y * 1000.f), 
+        (int16_t)(pos->z * 1000.f));
+}
+
 void CommunicationPC::printMessage(Message msg){
       Serial.println ("*************************************************");
       Serial.println("Reception d'un nouveau message");
@@ -398,4 +425,14 @@ void CommunicationPC::printMessage(Message msg){
       Serial.printf("\nchecksum : %2X.\n", msg.checksum);
     //   Serial.println(".");
       Serial.println ("*************************************************");
+}
+
+bool CommunicationPC::newMoveReceived(){
+    return (this->cursor_move_write - this->cursor_move_read);
+}
+
+MOVE *CommunicationPC::getMove(){
+    MOVE *move = &this->move[cursor_move_read];
+    cursor_move_read = (cursor_move_read + 1) % SIZE_FIFO;
+    return move;
 }

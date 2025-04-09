@@ -69,6 +69,9 @@ void TURC::moveTo(Position pos){
 }
 
 void TURC::moveTo(Position *pos){
+    if(pos == nullptr){
+        return;
+    }
     if(*pos>pos_max || *pos<pos_min){
         return;
     }
@@ -152,14 +155,23 @@ void TURC::machine(){
     case WAIT:
     {
         if(this->newMoveReceived()){
-            this->moveTo(this->getMove());
-            state = RUN;
-        }
-        else if(this->newServoGrabReceived()){
-            state = SERVO_GRAB;
-        }
-        else if(this->newServoReleaseReceived()){
-            state = SERVO_RELEASE;
+            MOVE *move = this->getMove();
+            if(move == nullptr){
+                return;
+            }
+            if(move->type == XYT_MOVE){
+                this->moveTo(&move->pos);
+                state = RUN;
+            }
+            else if(move->type == SERVO_GRAB_MOVE){
+                state = SERVO_GRAB;
+            }
+            else if(move->type == SERVO_RELEASE_MOVE){
+                state = SERVO_RELEASE;
+            }
+            else if(move->type == HOMING_MOVE){
+                state = HOMING;
+            }    
         }
     }
         break;

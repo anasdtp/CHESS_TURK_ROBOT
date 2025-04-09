@@ -189,7 +189,7 @@ void CommunicationPC::RxManage(){
         }break;
 
         case ID_SEND_CURRENT_POSITION:{
-            sendMsg(ID_ACK_SEND_CURRENT_POSITION, current_position);
+            request_to_send_current_position = true;
         }break;
 
         default:

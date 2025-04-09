@@ -59,10 +59,19 @@ void setup() {
   Position pos = {0.1, 0, 0};
   turc->moveTo(pos);
 
+  turc->sendMsg(ID_ACK_GENERAL);
+
 }
+
+unsigned long lastTime = 0;
 
 void loop() {
   turc->RxManage();
 
   turc->machine();
+
+  // if(millis() - lastTime > 1000) {
+  //   lastTime = millis();
+  //   turc->sendMsg(ID_ACK_SEND_CURRENT_POSITION, turc->getCurrentPosition());
+  // }
 }

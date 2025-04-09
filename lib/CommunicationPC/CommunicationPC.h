@@ -63,8 +63,12 @@ public:
     bool newMoveReceived();
     MOVE *getMove();
 
-    void attachCurrentPosition(Position *pos){
-        this->current_position = pos;//Sert à recuperer le pointeur de la position courante
+    bool getRequestToSendCurrentPosition(bool afterCheck = false){
+        if(request_to_send_current_position){
+            request_to_send_current_position = afterCheck;
+            return true;
+        }
+        return false;
     }
 
 private:
@@ -96,7 +100,7 @@ private:
     int cursor_move_write = 0;
     int cursor_move_read = 0;
     
-    Position *current_position;
+    bool request_to_send_current_position = false;
 };
 
 

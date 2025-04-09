@@ -150,6 +150,7 @@ void TURC::setPosMin_Max(Position pos_min, Position pos_max){
 }
 
 void TURC::machine(){
+    static unsigned long last_time = 0;
     switch (state)
     {
     case WAIT:
@@ -172,6 +173,10 @@ void TURC::machine(){
             else if(move->type == HOMING_MOVE){
                 state = HOMING;
             }    
+        }
+        if(millis() - last_time > 1000){
+            last_time = millis();
+            sendMsg(ID_ACK_SERVO_GRAB);
         }
     }
         break;

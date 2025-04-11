@@ -36,6 +36,8 @@ TURC::TURC(MultiStepper *steppers, Servo *servo) : CommunicationPC()
     current->y = 0;
     current->z = 0;
 
+    this->attachPosition(current);
+
     state = WAIT;
 }
 
@@ -174,27 +176,28 @@ void TURC::machine(){
                 state = HOMING;
             }    
         }
-        if(millis() - last_time > 1000){
-            last_time = millis();
-            sendMsg(ID_ACK_SERVO_GRAB);
-        }
+        // if(millis() - last_time > 1000){
+        //     last_time = millis();
+        //     sendMsg(ID_ACK_SERVO_GRAB);
+        // }
     }
         break;
     case RUN:
     {
-        if(FDC1Pressed){
-            this->stepper1->stop();
-            this->stepper1->setCurrentPosition(0);
-        }
-        if(FDC2Pressed){
-            this->stepper2->stop();
-            this->stepper2->setCurrentPosition(0);
-        }   
-        if(FDC3Pressed){
-            this->stepper3->stop();
-            this->stepper3->setCurrentPosition(0);
-        }
+        // if(FDC1Pressed){
+        //     this->stepper1->stop();
+        //     this->stepper1->setCurrentPosition(0);
+        // }
+        // if(FDC2Pressed){
+        //     this->stepper2->stop();
+        //     this->stepper2->setCurrentPosition(0);
+        // }   
+        // if(FDC3Pressed){
+        //     this->stepper3->stop();
+        //     this->stepper3->setCurrentPosition(0);
+        // }
         if(!this->steppers->run()){
+            this->getCurrentPosition();
             state = WAIT;
         }
     }

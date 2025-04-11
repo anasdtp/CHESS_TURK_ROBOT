@@ -9,7 +9,7 @@ TURC *turc;
 Servo *myservo;
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(921600);
 
   steppers = new MultiStepper();
   myservo = new Servo();

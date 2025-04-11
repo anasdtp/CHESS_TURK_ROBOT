@@ -20,12 +20,6 @@ CommunicationPC* CommunicationPC::instance = nullptr;  // Initialize the static 
 
 CommunicationPC::CommunicationPC(/* args */)
 {
-    currentState = WAITING_HEADER;
-    dataCounter = 0;
-
-    FIFO_ecriture = 0;
-
-
     cursor_move_read = 0;
     cursor_move_write = 0;
     move[cursor_move_write].type = NONE;
@@ -57,7 +51,7 @@ void CommunicationPC::onReceiveFunction(void) {
         uint8_t byte = readData();
         // Serial.printf("%2X ",byte);
         // _serial->write(byte);
-        onReceive(byte); // Call the function to handle the received byte
+        instance->com.onReceive(byte); // Call the function to handle the received byte
     }
 }
 
@@ -72,15 +66,27 @@ void CommunicationPC::onReceiveFunctionBT(esp_spp_cb_event_t event, esp_spp_cb_p
         uint8_t byte = readDataBT();
         // Serial.printf("%2X ",byte);
         // _serial->write(byte);
-        onReceive(byte); // Call the function to handle the received byte
+        instance->comBT.onReceive(byte); // Call the function to handle the received byte
     }
 }
 
-void CommunicationPC::onReceive(uint8_t byte) {    
+
+int OnReceive::static_FIFO_ecriture = 0; // Initialize the static FIFO_ecriture pointer
+Message OnReceive::rxMsg[SIZE_FIFO];    // Define the static rxMsg array
+
+OnReceive::OnReceive(){
+    FIFO_ecriture = 0;
+    currentState = WAITING_HEADER;
+    dataCounter = 0;
+}
+
+void OnReceive::onReceive(uint8_t byte) {    
+    // Serial.printf("[%2X]",byte);
     switch (currentState) {
         case WAITING_HEADER:{
             if (byte == 0xFF) { // HEADER
                 currentState = RECEIVING_ID;
+                FIFO_ecriture = static_FIFO_ecriture;
                 rxMsg[FIFO_ecriture].checksum = 0;
             }
             }
@@ -120,16 +126,18 @@ void CommunicationPC::onReceive(uint8_t byte) {
             } else {
                 // Gérer l'erreur de checksum ici
                 // Serial.printf("CommunicationARAL::onReceiveFunction() : Erreur calcul checksum. checksum calculé : %d (int), checksum reçu : %d (int) \n", checksum, byte);
-                sendMsg(ID_REPEAT_REQUEST);
+                // sendMsg(ID_REPEAT_REQUEST);
                 currentState = WAITING_HEADER;
             }
             }break;
 
         case WAITING_FOOTER:{
+            // Serial.println();
             if (byte == 0xFF) { // FOOTER
                 // Le message est complet
                 // printMessage(rxMsg[FIFO_ecriture]);
                 FIFO_ecriture = (FIFO_ecriture + 1) % SIZE_FIFO;
+                static_FIFO_ecriture = FIFO_ecriture;
                 // sendMsg(ID_ACK_GENERAL);
             }
             currentState = WAITING_HEADER;
@@ -145,27 +153,51 @@ void CommunicationPC::onReceive(uint8_t byte) {
     }
 }
 
+void OnReceive::printMessage(Message msg){
+    Serial.println ("*************************************************");
+    Serial.println("Reception d'un nouveau message");
+    Serial.printf("ID : %2X, data[%d] = ", msg.id, msg.len);
+    if(msg.len){
+      //Serial.printf(", len : %d, data[%d] = ", msg.len, msg.len);
+      for (int i = 0; i < msg.len; i++)
+      {
+          Serial.printf("[%2X] ", msg.data[i]);
+      }
+    }
+    Serial.printf("\nchecksum : %2X.\n", msg.checksum);
+  //   Serial.println(".");
+    Serial.println ("*************************************************");
+}
+
 //Doit etre dans la loop
 void CommunicationPC::RxManage(){
     static signed char FIFO_lecture = 0, FIFO_occupation = 0, FIFO_max_occupation = 0;
 
-    FIFO_occupation = FIFO_ecriture - FIFO_lecture;
+    FIFO_occupation = OnReceive::getFIFO_ecriture() - FIFO_lecture;
     if(FIFO_occupation<0){FIFO_occupation=FIFO_occupation+SIZE_FIFO;}
     if(FIFO_max_occupation<FIFO_occupation){FIFO_max_occupation=FIFO_occupation;}
     if(!FIFO_occupation){return;}
     //Alors il y a un nouveau message en attente de traitement
-    // printMessage(rxMsg[FIFO_lecture]);
+    Message msg = OnReceive::getMsg(FIFO_lecture);
+    // OnReceive::printMessage(msg);    
 
-    switch (rxMsg[FIFO_lecture].id)
+    switch (msg.id)
     {
         case ID_CMD_MOVE:{
             //Je recois en millimetres et je convertie en metres
+            int16_t x = (int16_t)(msg.data[1]<<8 | msg.data[0]);
+            int16_t y = (int16_t)(msg.data[3]<<8 | msg.data[2]);
+            int16_t z = (int16_t)(msg.data[5]<<8 | msg.data[4]);
+
             move[cursor_move_write].type = XYT_MOVE;
-            move[cursor_move_write].pos.x = (float)((int16_t)(rxMsg[FIFO_lecture].data[1]<<8 | rxMsg[FIFO_lecture].data[0]))/1000.f; 
-            move[cursor_move_write].pos.y = (float)((int16_t)(rxMsg[FIFO_lecture].data[3]<<8 | rxMsg[FIFO_lecture].data[2]))/1000.f;
-            move[cursor_move_write].pos.z = (float)((int16_t)(rxMsg[FIFO_lecture].data[5]<<8 | rxMsg[FIFO_lecture].data[4]))/1000.f;
-            cursor_move_write = (cursor_move_write + 1) % SIZE_FIFO;
+            move[cursor_move_write].pos.x = ((float)x) / 1000.f;
+            move[cursor_move_write].pos.y = ((float)y) / 1000.f;
+            move[cursor_move_write].pos.z = ((float)z) / 1000.f;
             
+            // Serial.printf("x = %d, y = %d, z = %d\n", x, y, z);
+            Serial.printf("x = %f, y = %f, z = %f\n", move[cursor_move_write].pos.x, move[cursor_move_write].pos.y, move[cursor_move_write].pos.z);
+            
+            cursor_move_write = (cursor_move_write + 1) % SIZE_FIFO;
             sendMsg(ID_ACK_CMD_MOVE);
         }break;
 
@@ -189,7 +221,7 @@ void CommunicationPC::RxManage(){
         }break;
 
         case ID_SEND_CURRENT_POSITION:{
-            request_to_send_current_position = true;
+            sendMsg(ID_ACK_SEND_CURRENT_POSITION, current_position);
         }break;
 
         default:
@@ -403,28 +435,13 @@ void CommunicationPC::sendMsg(uint8_t id, Position *pos){
             (int16_t)(0), 
             (int16_t)(0), 
             (int16_t)(0));
+        Serial.println("Position pointeur is null, sending 0,0,0");
         return;
     }
     sendMsg(id, 
         (int16_t)(pos->x * 1000.f), 
         (int16_t)(pos->y * 1000.f), 
         (int16_t)(pos->z * 1000.f));
-}
-
-void CommunicationPC::printMessage(Message msg){
-      Serial.println ("*************************************************");
-      Serial.println("Reception d'un nouveau message");
-      Serial.printf("ID : %2X, data[%d] = ", msg.id, msg.len);
-      if(msg.len){
-        //Serial.printf(", len : %d, data[%d] = ", msg.len, msg.len);
-        for (int i = 0; i < msg.len; i++)
-        {
-            Serial.printf("[%2X] ", msg.data[i]);
-        }
-      }
-      Serial.printf("\nchecksum : %2X.\n", msg.checksum);
-    //   Serial.println(".");
-      Serial.println ("*************************************************");
 }
 
 bool CommunicationPC::newMoveReceived(){
@@ -435,4 +452,8 @@ MOVE *CommunicationPC::getMove(){
     MOVE *move = &this->move[cursor_move_read];
     cursor_move_read = (cursor_move_read + 1) % SIZE_FIFO;
     return move;
+}
+
+void CommunicationPC::attachPosition(Position *pos){
+    this->current_position = pos;
 }

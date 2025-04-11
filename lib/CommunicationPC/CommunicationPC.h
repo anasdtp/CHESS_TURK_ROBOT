@@ -29,6 +29,41 @@
   }Message;
 #endif
 
+class OnReceive
+{
+private:
+  static Message rxMsg[SIZE_FIFO]; 
+  static int static_FIFO_ecriture;
+  int FIFO_ecriture;
+  // État de la réception 
+  enum StateRx{
+    WAITING_HEADER,
+    RECEIVING_ID,
+    RECEIVING_LEN,
+    RECEIVING_DATA,
+    RECEIVING_CHECKSUM,
+    WAITING_FOOTER
+  };
+  StateRx currentState = WAITING_HEADER;
+  uint8_t dataCounter = 0, byte;
+
+public:
+  OnReceive();
+
+  void onReceive(uint8_t byte);
+
+  static int getFIFO_ecriture(){
+    return static_FIFO_ecriture;
+  }
+
+  static Message getMsg(int index){
+    return rxMsg[index];
+  }
+
+  static void printMessage(Message msg);
+};
+
+
 class CommunicationPC
 {
 public:
@@ -63,30 +98,14 @@ public:
     bool newMoveReceived();
     MOVE *getMove();
 
-    bool getRequestToSendCurrentPosition(bool afterCheck = false){
-        if(request_to_send_current_position){
-            request_to_send_current_position = afterCheck;
-            return true;
-        }
-        return false;
-    }
+    void attachPosition(Position *pos);
 
 private:
     HardwareSerial *_serial;
     BluetoothSerial *_serialBT;
-    Message rxMsg[SIZE_FIFO]; int FIFO_ecriture;
 
-    // État de la réception
-    enum StateRx{
-      WAITING_HEADER,
-      RECEIVING_ID,
-      RECEIVING_LEN,
-      RECEIVING_DATA,
-      RECEIVING_CHECKSUM,
-      WAITING_FOOTER
-    };
-    StateRx currentState = WAITING_HEADER;
-    uint8_t dataCounter = 0, byte;
+    OnReceive com;
+    OnReceive comBT;
 
     void onReceiveFunction(void);
 
@@ -94,13 +113,11 @@ private:
     static void onReceiveFunctionBTStatic(esp_spp_cb_event_t event, esp_spp_cb_param_t *param);
     void onReceiveFunctionBT(esp_spp_cb_event_t event, esp_spp_cb_param_t *param);
 
-    void onReceive(uint8_t byte);
-
     MOVE move[SIZE_FIFO];
     int cursor_move_write = 0;
     int cursor_move_read = 0;
     
-    bool request_to_send_current_position = false;
+    Position *current_position;
 };
 
 

@@ -46,30 +46,30 @@ void MultiStepper::moveTo(long absolute[])
     }
 }
 
-// Returns true if any motor is still running to the target position.
+// Returns true if no motor is still running to the target position.
 boolean MultiStepper::run()
 {
     uint8_t i;
-    boolean ret = false;
+    boolean ret = true;
     for (i = 0; i < _num_steppers; i++)
     {
 	if ( _steppers[i]->distanceToGo() != 0)
 	{
 	    _steppers[i]->runSpeed();
-	    ret = true;
+	    ret = false;
 	}
 	// Caution: it has een reported that if any motor is used with acceleration outside of
 	// MultiStepper, this code is necessary, you get 
 	// strange results where it moves in the wrong direction for a while then 
 	// slams back the correct way.
-#if 0
-	else
-	{
-	    // Need to call this to clear _stepInterval, _speed and _n 
-	    otherwise future calls will fail.
-		_steppers[i]->setCurrentPosition(_steppers[i]->currentPosition());
-	}
-#endif
+// #if 0
+// 	else
+// 	{
+// 	    // Need to call this to clear _stepInterval, _speed and _n 
+// 	    otherwise future calls will fail.
+// 		_steppers[i]->setCurrentPosition(_steppers[i]->currentPosition());
+// 	}
+// #endif
 	
     }
     return ret;

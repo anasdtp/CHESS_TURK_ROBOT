@@ -53,13 +53,17 @@ public:
     
     /// Calls runSpeed() on all the managed steppers
     /// that have not acheived their target position.
-    /// \return true if any stepper is still in the process of running to its target position.
+    /// \return true if no stepper is still in the process of running to its target position.
     boolean run();
 
     /// Runs all managed steppers until they acheived their target position.
     /// Blocks until all that position is acheived. If you dont
     /// want blocking consider using run() instead.
     void    runSpeedToPosition();
+
+    uint8_t getNbSteppers(){
+        return _num_steppers;
+    }
     
 private:
     /// Array of pointers to the steppers we are controlling.

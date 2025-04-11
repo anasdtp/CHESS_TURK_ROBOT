@@ -195,7 +195,7 @@ void CommunicationPC::RxManage(){
             move[cursor_move_write].pos.z = ((float)z) / 1000.f;
             
             // Serial.printf("x = %d, y = %d, z = %d\n", x, y, z);
-            Serial.printf("x = %f, y = %f, z = %f\n", move[cursor_move_write].pos.x, move[cursor_move_write].pos.y, move[cursor_move_write].pos.z);
+            // Serial.printf("x = %f, y = %f, z = %f\n", move[cursor_move_write].pos.x, move[cursor_move_write].pos.y, move[cursor_move_write].pos.z);
             
             cursor_move_write = (cursor_move_write + 1) % SIZE_FIFO;
             sendMsg(ID_ACK_CMD_MOVE);

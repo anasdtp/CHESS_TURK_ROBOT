@@ -19,14 +19,13 @@ void setup() {
 
   turc->configureMicrostepping(false, false, false);
 
-  ESP32PWM::allocateTimer(0);
-	ESP32PWM::allocateTimer(1);
-	ESP32PWM::allocateTimer(2);
-	ESP32PWM::allocateTimer(3);
+  // ESP32PWM::allocateTimer(0);
+	// ESP32PWM::allocateTimer(1);
+	// ESP32PWM::allocateTimer(2);
+	// ESP32PWM::allocateTimer(3);
 
-  myservo->setPeriodHertz(50);    // standard 50 hz servo
-	myservo->attach(SERVO, 1000, 2000);
-
+  // myservo->setPeriodHertz(50);    // standard 50 hz servo
+  myservo->attach(SERVO);
   // turc->homing();
 
   turc->stepper1->setMaxSpeed(1000.0);
@@ -52,24 +51,26 @@ void setup() {
   // long positions[4];
   // positions[0] = STEPS_PER_REVOLTION;
   // positions[1] = STEPS_PER_REVOLTION;
-  // positions[2] = 0;
-  // positions[4] = 0;
+  // positions[2] = STEPS_PER_REVOLTION;
+  // positions[3] = STEPS_PER_REVOLTION;
   
   // steppers->moveTo(positions);
-  Position pos = {0.1, 0, 0};
-  turc->moveTo(pos);
+
+
+
+  // Position pos = {0.1, 0, 0};
+  // turc->moveTo(pos);
 
   turc->sendMsg(ID_ACK_GENERAL);
 
+  delay(500);
+  Serial.printf("\nNombre de stepper connectés : %d\n", steppers->getNbSteppers());
 }
-
-unsigned long lastTime = 0;
 
 void loop() {
   turc->RxManage();
 
   turc->machine();
-
   // if(millis() - lastTime > 1000) {
   //   lastTime = millis();
   //   turc->sendMsg(ID_ACK_SEND_CURRENT_POSITION, turc->getCurrentPosition());

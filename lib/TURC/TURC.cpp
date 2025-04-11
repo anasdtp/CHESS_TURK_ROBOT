@@ -164,12 +164,16 @@ void TURC::machine(){
             }
             if(move->type == XYT_MOVE){
                 this->moveTo(&move->pos);
+                Serial.println("XYT Move");
+                Serial.printf("X: %f, Y: %f, Z: %f\n", move->pos.x, move->pos.y, move->pos.z);
                 state = RUN;
             }
             else if(move->type == SERVO_GRAB_MOVE){
+                Serial.println("Servo Grab");
                 state = SERVO_GRAB;
             }
             else if(move->type == SERVO_RELEASE_MOVE){
+                Serial.println("Servo Release");
                 state = SERVO_RELEASE;
             }
             else if(move->type == HOMING_MOVE){
@@ -196,7 +200,7 @@ void TURC::machine(){
         //     this->stepper3->stop();
         //     this->stepper3->setCurrentPosition(0);
         // }
-        if(!this->steppers->run()){
+        if(this->steppers->run()){
             this->getCurrentPosition();
             state = WAIT;
         }
@@ -204,15 +208,18 @@ void TURC::machine(){
         break;
     case SERVO_GRAB:
     {
+        servo->attach(SERVO);
         servo->write(180);
-        delay(100);
+        delay(500);
         state = WAIT;
     }
         break;
     case SERVO_RELEASE:
     {
+        servo->attach(SERVO);
         servo->write(0);
-        delay(100);
+        delay(500);
+        servo->detach();
         state = WAIT;
     }
         break;

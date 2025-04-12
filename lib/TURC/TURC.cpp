@@ -7,25 +7,25 @@ TURC::TURC(MultiStepper *steppers, Servo *servo) : CommunicationPC()
     setupGPIO();
     configureMicrostepping(false, false, false);
 
-    this->stepper1 = new AccelStepper(AccelStepper::FULL2WIRE, STEP1, DIR1);
-    this->stepper2 = new AccelStepper(AccelStepper::FULL2WIRE, STEP2, DIR2);
-    this->stepper3 = new AccelStepper(AccelStepper::FULL2WIRE, STEP3, DIR3);
-    this->stepper4 = new AccelStepper(AccelStepper::FULL2WIRE, STEP4, DIR4);
+    this->stepper1 = new AccelStepper(AccelStepper::FULL2WIRE, STEP1, DIR1);//x
+    this->stepper2 = new AccelStepper(AccelStepper::FULL2WIRE, STEP2, DIR2);//y
+    this->stepper3 = new AccelStepper(AccelStepper::FULL2WIRE, STEP3, DIR3);//z
+    // this->stepper4 = new AccelStepper(AccelStepper::FULL2WIRE, STEP4, DIR4);//On a enlever un moteur
 
     this->stepper1->setMaxSpeed(1000);
     this->stepper2->setMaxSpeed(1000);
     this->stepper3->setMaxSpeed(1000);
-    this->stepper4->setMaxSpeed(1000);
+    // this->stepper4->setMaxSpeed(1000);
 
     this->stepper1->setAcceleration(1000);
     this->stepper2->setAcceleration(1000);
     this->stepper3->setAcceleration(1000);
-    this->stepper4->setAcceleration(1000);
+    // this->stepper4->setAcceleration(1000);
 
     this->steppers->addStepper(this->stepper1);
     this->steppers->addStepper(this->stepper2);
     this->steppers->addStepper(this->stepper3);
-    this->steppers->addStepper(this->stepper4);
+    // this->steppers->addStepper(this->stepper4);
 
     Position pos_min = {0, 0, 0};
     Position pos_max = {0.4, 0.4, 0.2};
@@ -59,12 +59,12 @@ void TURC::configureMicrostepping(bool ms3, bool ms2, bool ms1){
 
 void TURC::moveTo(Position pos){
     if(pos>pos_max || pos<pos_min){
+        Serial.println("Position out of bounds");
         return;
     }
-    positions[0] = pos.x * this->step_per_meter[0];
-    positions[1] = positions[0];
-    positions[2] = pos.y * this->step_per_meter[1];
-    positions[3] = pos.z * this->step_per_meter[2];
+    positions[0] = pos.x * this->step_per_meter[0];//x
+    positions[1] = pos.y * this->step_per_meter[1];//y
+    positions[2] = pos.z * this->step_per_meter[2];//z
     
     this->steppers->moveTo(positions);
     // this->steppers->runSpeedToPosition(); // Blocks until all are in position
@@ -72,14 +72,15 @@ void TURC::moveTo(Position pos){
 
 void TURC::moveTo(Position *pos){
     if(pos == nullptr){
+        Serial.println("Position is null");
         return;
     }
     if(*pos>pos_max || *pos<pos_min){
         return;
     }
-    positions[0] = pos->x * this->step_per_meter[0];
-    positions[1] = pos->x * this->step_per_meter[1];
-    positions[2] = pos->y * this->step_per_meter[2];
+    positions[0] = pos->x * this->step_per_meter[0];//x
+    positions[1] = pos->y * this->step_per_meter[1];//y
+    positions[2] = pos->z * this->step_per_meter[2];//z
     
     this->steppers->moveTo(positions);
     // this->steppers->runSpeedToPosition(); // Blocks until all are in position
@@ -87,8 +88,8 @@ void TURC::moveTo(Position *pos){
 
 Position *TURC::getCurrentPosition(){
     current->x = this->stepper1->currentPosition() / this->step_per_meter[0];
-    current->y = this->stepper3->currentPosition() / this->step_per_meter[2];
-    current->z = this->stepper4->currentPosition() / this->step_per_meter[3];
+    current->y = this->stepper2->currentPosition() / this->step_per_meter[2];
+    current->z = this->stepper3->currentPosition() / this->step_per_meter[3];
     return current;
 }
 
@@ -100,39 +101,35 @@ bool TURC::homing() {
             this->stepper1->moveTo(-10000000);
             this->stepper2->moveTo(-10000000);
             this->stepper3->moveTo(-10000000);
-            this->stepper4->moveTo(-10000000);
             axe = 1;
             break;
 
-        case 1:
+        case 1://X
             if (FDC1Pressed == LOW) {
                 this->stepper1->run();
-                this->stepper2->run();
             } else {
                 this->stepper1->stop();
-                this->stepper2->stop();
                 this->stepper1->setCurrentPosition(0);
-                this->stepper2->setCurrentPosition(0);
                 axe = 2;
             }
             break;
 
-        case 2:
+        case 2://Y
             if (FDC2Pressed == LOW) {
-                this->stepper3->run();
+                this->stepper2->run();
             } else {
-                this->stepper3->stop();
-                this->stepper3->setCurrentPosition(0);
+                this->stepper2->stop();
+                this->stepper2->setCurrentPosition(0);
                 axe = 3;
             }
             break;
 
-        case 3:
+        case 3://Z
             if (FDC3Pressed == LOW) {
-                this->stepper4->run();
+                this->stepper3->run();
             } else {
-                this->stepper4->stop();
-                this->stepper4->setCurrentPosition(0);
+                this->stepper3->stop();
+                this->stepper3->setCurrentPosition(0);
                 axe = 0; // Reset axe to indicate homing is complete
                 return true; // Homing is complete
             }

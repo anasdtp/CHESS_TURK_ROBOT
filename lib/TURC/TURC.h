@@ -25,7 +25,7 @@ public:
     AccelStepper *stepper1;//(AccelStepper::FULL2WIRE, STEP1, DIR1);
     AccelStepper *stepper2;//(AccelStepper::FULL2WIRE, STEP2, DIR2);
     AccelStepper *stepper3;//(AccelStepper::FULL2WIRE, STEP3, DIR3);
-    AccelStepper *stepper4;//(AccelStepper::FULL2WIRE, STEP4, DIR4);
+    // AccelStepper *stepper4;//(AccelStepper::FULL2WIRE, STEP4, DIR4);
 
     float deg_per_step;
 

@@ -44,16 +44,11 @@ void setup() {
   turc->stepper3->moveTo(1000);
   turc->stepper3->setCurrentPosition(0);
 
-  turc->stepper4->setMaxSpeed(1000.0);
-  turc->stepper4->setAcceleration(1000.0);
-  turc->stepper4->moveTo(1000);
-  turc->stepper4->setCurrentPosition(0);
-
   // long positions[4];
   // positions[0] = STEPS_PER_REVOLTION;
   // positions[1] = STEPS_PER_REVOLTION;
   // positions[2] = 0;
-  // positions[4] = 0;
+  // positions[3] = 0;
   
   // steppers->moveTo(positions);
   Position pos = {0.1, 0, 0};

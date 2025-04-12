@@ -201,15 +201,18 @@ void TURC::machine(){
         break;
     case SERVO_GRAB:
     {
+        servo->attach(SERVO);
         servo->write(180);
-        delay(100);
+        delay(500);
         state = WAIT;
     }
         break;
     case SERVO_RELEASE:
     {
+        servo->attach(SERVO);
         servo->write(0);
-        delay(100);
+        delay(500);
+        servo->detach();
         state = WAIT;
     }
         break;

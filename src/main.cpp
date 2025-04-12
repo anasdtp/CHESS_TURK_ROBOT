@@ -24,8 +24,7 @@ void setup() {
 	ESP32PWM::allocateTimer(2);
 	ESP32PWM::allocateTimer(3);
 
-  myservo->setPeriodHertz(50);    // standard 50 hz servo
-	myservo->attach(SERVO, 1000, 2000);
+	myservo->attach(SERVO);
 
   // turc->homing();
 

@@ -198,7 +198,7 @@ void CommunicationPC::RxManage(){
             Serial.printf("x = %f, y = %f, z = %f\n", move[cursor_move_write].pos.x, move[cursor_move_write].pos.y, move[cursor_move_write].pos.z);
             
             cursor_move_write = (cursor_move_write + 1) % SIZE_FIFO;
-            sendMsg(ID_ACK_CMD_MOVE);
+            // sendMsg(ID_ACK_CMD_MOVE);//Ack envoyé par le TURC quand le mouvement est terminé
         }break;
 
         case ID_SERVO_GRAB:{

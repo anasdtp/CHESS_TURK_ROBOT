@@ -196,6 +196,7 @@ void TURC::machine(){
         if(!this->steppers->run()){
             this->getCurrentPosition();
             state = WAIT;
+            sendMsg(ID_ACK_CMD_MOVE);
         }
     }
         break;

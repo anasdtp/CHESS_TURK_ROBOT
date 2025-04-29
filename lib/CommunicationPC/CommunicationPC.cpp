@@ -224,6 +224,11 @@ void CommunicationPC::RxManage(){
             sendMsg(ID_ACK_SEND_CURRENT_POSITION, current_position);
         }break;
 
+        case ID_CMD_BOUTTON_STATE:{
+            move[cursor_move_write].type = BUTTON_STATE_MOVE;
+            cursor_move_write = (cursor_move_write + 1) % SIZE_FIFO;
+        }break;
+
         default:
             sendMsg(ID_ACK_GENERAL);
             break;

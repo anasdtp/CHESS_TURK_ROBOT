@@ -94,6 +94,7 @@ Position *TURC::getCurrentPosition(){
 }
 
 bool TURC::homing() {
+    static unsigned long last_time = 0, wait_time = 3000;
     static int axe = 0;
 
     switch (axe) {
@@ -102,30 +103,33 @@ bool TURC::homing() {
             this->stepper2->moveTo(-10000000);
             this->stepper3->moveTo(-10000000);
             axe = 1;
+            last_time = millis();
             break;
 
         case 1://X
-            if (FDC1Pressed == LOW) {
+            if (millis() - last_time < wait_time) {
                 this->stepper1->run();
             } else {
                 this->stepper1->stop();
                 this->stepper1->setCurrentPosition(0);
                 axe = 2;
+                last_time = millis();
             }
             break;
 
         case 2://Y
-            if (FDC2Pressed == LOW) {
+            if (millis() - last_time < wait_time) {
                 this->stepper2->run();
             } else {
                 this->stepper2->stop();
                 this->stepper2->setCurrentPosition(0);
                 axe = 3;
+                last_time = millis();
             }
             break;
 
         case 3://Z
-            if (FDC3Pressed == LOW) {
+            if (millis() - last_time < wait_time) {
                 this->stepper3->run();
             } else {
                 this->stepper3->stop();
@@ -149,7 +153,6 @@ void TURC::setPosMin_Max(Position pos_min, Position pos_max){
 }
 
 void TURC::machine(){
-    static unsigned long last_time = 0;
     switch (state)
     {
     case WAIT:
@@ -171,28 +174,18 @@ void TURC::machine(){
             }
             else if(move->type == HOMING_MOVE){
                 state = HOMING;
-            }    
+            }  
+            else if(move->type == BUTTON_STATE_MOVE){
+                state = BUTTON_STATE;
+            }
+            else{
+                Serial.println("Unknown move type");
+            }
         }
-        // if(millis() - last_time > 1000){
-        //     last_time = millis();
-        //     sendMsg(ID_ACK_SERVO_GRAB);
-        // }
     }
         break;
     case RUN:
     {
-        // if(FDC1Pressed){
-        //     this->stepper1->stop();
-        //     this->stepper1->setCurrentPosition(0);
-        // }
-        // if(FDC2Pressed){
-        //     this->stepper2->stop();
-        //     this->stepper2->setCurrentPosition(0);
-        // }   
-        // if(FDC3Pressed){
-        //     this->stepper3->stop();
-        //     this->stepper3->setCurrentPosition(0);
-        // }
         if(!this->steppers->run()){
             this->getCurrentPosition();
             state = WAIT;
@@ -224,6 +217,13 @@ void TURC::machine(){
         }
     }
         break;
+    case BUTTON_STATE:
+    {
+        sendMsg(ID_ACK_CMD_BOUTTON_STATE, uint8_t(FDC1Pressed));
+        state = WAIT;
+    }
+        break;
+    
     default:
         state = WAIT;
         break;

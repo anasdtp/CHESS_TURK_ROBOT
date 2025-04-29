@@ -17,6 +17,8 @@
 #define ID_ACK_HOMING                 0xA7 //On accuse la réception
 #define ID_SEND_CURRENT_POSITION      0xA8 //On nous demande d'envoyer la position courante
 #define ID_ACK_SEND_CURRENT_POSITION  0xA9 //On accuse la réception en envoyant la position courante
+#define ID_CMD_BOUTTON_STATE          0xB1 // Request button state
+#define ID_ACK_CMD_BOUTTON_STATE      0xB2 // On accuse la réception en envoyant l'état du bouton
 
 #ifndef SIZE_FIFO
   #define SIZE_FIFO 32 //maximum 150 du fait du type char

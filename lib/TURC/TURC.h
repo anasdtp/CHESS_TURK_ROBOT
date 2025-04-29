@@ -73,6 +73,7 @@ private:
         SERVO_GRAB,
         SERVO_RELEASE,
         HOMING,
+        BUTTON_STATE,
       };
 
     StateStepper state;

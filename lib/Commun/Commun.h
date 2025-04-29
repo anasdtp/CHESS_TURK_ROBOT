@@ -31,6 +31,7 @@ typedef enum{
     SERVO_GRAB_MOVE,
     SERVO_RELEASE_MOVE,
     HOMING_MOVE,
+    BUTTON_STATE_MOVE,
 }TYPE_OF_MOVE;
 
 typedef struct MOVE{
